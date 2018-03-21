@@ -1,5 +1,8 @@
 import re
 import os.path
+import unittest
+
+from utils import *
 
 class Wordlist:
     def __init__(self, proper=False):
@@ -28,3 +31,32 @@ class Wordlist:
             if m:
                 w = m.groups()[0].lower()
                 self.words.add(w)
+
+        self.lookup = {}
+        for w in self.words:
+            k = normalize(w)
+            if k not in self.lookup:
+                self.lookup[k] = set()
+            self.lookup[k].add(w)
+
+    def __contains__(self, k):
+        return k in self.lookup
+    
+    def __getitem__(self, k):
+        return self.lookup[k]
+
+class TestWordlist(unittest.TestCase):
+    def test_get(self):
+        x = Wordlist()
+        y = x['acr']
+        self.assertEqual(2, len(y))
+        self.assertTrue('arc' in y)
+        self.assertTrue('car' in y)
+
+    def test_in(self):
+        x = Wordlist()
+        self.assertTrue(('acr') in x)
+        self.assertFalse(('arc') in x)
+
+if __name__ == '__main__':
+    unittest.main()
