@@ -5,7 +5,7 @@ import unittest
 from utils import *
 
 class Wordlist:
-    def __init__(self, proper=False):
+    def __init__(self, proper=False, minLength=2):
         self.proper = proper
         self.linect = 0
         self.words = set()
@@ -30,6 +30,8 @@ class Wordlist:
             m = word_re.match(line)
             if m:
                 w = m.groups()[0].lower()
+                if len(w) < minLength:
+                    continue
                 self.words.add(w)
 
         self.lookup = {}

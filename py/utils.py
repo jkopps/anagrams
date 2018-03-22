@@ -3,6 +3,15 @@ import unittest
 def normalize(s):
     return reduce(lambda a, b: a+b, sorted(list(s)), '')
 
+def wordset(a='', b=''):
+    if len(a) == 0:
+        return b
+    if len(b) == 0:
+        return a
+    z = a.split(',') + b.split(',')
+    z.sort()
+    return reduce(lambda a, b: '%s,%s' % (a,b), z)
+
 def substrings(s):
     ret = {}
     for i in range(len(s)-1):
@@ -43,6 +52,15 @@ class TestUtilities(unittest.TestCase):
         expected = {'a' : 'abbcc', 'b' : 'aabcc', 'c' : 'aabbc'}
         actual = substrings(sup)
         self.assertEqual(expected, actual)
+
+    def test_wordset(self):
+        self.assertEqual('abc,def', wordset('abc', 'def'))
+        self.assertEqual('abc,def', wordset('abc,def'))
+        self.assertEqual('abc', wordset('abc'))
+        self.assertEqual('abc', wordset('', 'abc'))
+        self.assertEqual('abc,def,ghi,jkl', wordset('abc,ghi', 'def,jkl'))
+        self.assertEqual('abc,def,ghi,jkl', wordset('abc,ghi,jkl', 'def'))
+        self.assertEqual('abc,def,ghi,jkl', wordset('ghi', 'abc,def,jkl'))
 
 if __name__ == '__main__':
     unittest.main()

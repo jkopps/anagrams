@@ -7,19 +7,21 @@ from utils import *
 
 class Congruence:
     def __init__(self, remainder=None, words=None):
-        ### each "remainder" substring maps to a set of word tuples
+        ### each "remainder" substring maps to a set of word "tuples"
         self.data = {}
         if remainder == None and words != None:
             raise ValueError('Must specify remainder with words')
         if remainder != None:
             self.data[remainder] = set()
         if words != None:
-            self.data[remainder].add(tuple(sorted(words)))
+            v = reduce(lambda a, b: '%s,%s' % (a,b), sorted(words))
+            self.data[remainder].add(v)
 
     def __contains__(self, k):
         return k in self.data
 
     def __getitem__(self, k):
+        sys.stderr.write('Getting "%s" from Congruence %s\n' % (k, self.data))
         return self.data[k]
 
     def iteritems(self):
@@ -28,7 +30,8 @@ class Congruence:
     def merge(self, remainder, w1, w2):
         """Merge two sub-congruences into this one
         """
-        errmsg = 'parameters w1 and w2 must be sets of tuples of strings'
+        sys.stderr.write('Merging "%s" and "%s"\n' % (w1,w2))
+        errmsg = 'parameters w1 and w2 must be sets of comma-separated strings'
         if type(w1) != set or type(w2) != set:
             raise ValueError(errmsg)
         if type(remainder) != str:
@@ -49,7 +52,7 @@ class Congruence:
             # assert type(t1) == tuple, ValueError(errmsg)
             for t2 in w2:
                 # assert type(t2) == tuple, ValueError(errmsg)
-                v = tuple(sorted(t1 + t2))
+                v = wordset(t1, t2)
                 self.data[k].add(v)
 
 class TestCongruence(unittest.TestCase):
@@ -66,15 +69,15 @@ class TestCongruence(unittest.TestCase):
         self.assertTrue('1y' in y.data)
         self.assertTrue('2y' in y.data)
         self.assertEqual(len(y.data), 2)
-        self.assertTrue(('a','b','c','d') in y.data['1y'])
-        self.assertTrue(('e','f','g','h') in y.data['2y'])
+        self.assertTrue(('a,b,c,d') in y.data['1y'])
+        self.assertTrue(('e,f,g,h') in y.data['2y'])
         ##
         z = Congruence()
         z.merge('z', y.data['1y'], y.data['2y'])
         #
         self.assertTrue('z' in z.data)
         self.assertEqual(len(z.data), 1)
-        self.assertTrue(('a','b','c','d','e','f','g','h') in z.data['z'])
+        self.assertTrue(('a,b,c,d,e,f,g,h') in z.data['z'])
 
     def test_merge_halfEmpty(self):
         z = Congruence()
@@ -109,9 +112,16 @@ class AnagramTree:
             ret.merge('', self.wordlist[s], set())
 
         for c, s1 in substrings(s).iteritems():
+            sys.stderr.write('recursing "%s" "%s"\n' % (c, s1))
             # s = c + s1
             x = self.get(s1)
             for r1, w1 in x.iteritems():
+                for t in w1:
+                    for w_ in t.split(','):
+                        if normalize(w_) not in self.wordlist:
+                            import pdb
+                            pdb.set_trace()
+                        assert normalize(w_) in self.wordlist
                 #    s1  = r1 + w1[i]
                 # => s   = (c + r1) + w1[i]
                 #
@@ -124,7 +134,10 @@ class AnagramTree:
                     ret.merge('', self.wordlist[s2], w1)
                 else:
                     y = self.get(c + r1)
-                    for r2, w2 in y:
+                    for r2, w2 in y.iteritems():
+                        for t in w2:
+                            for w_ in t.split(','):
+                                assert normalize(w_) in self.wordlist
                         #    c + rem = r2 + w2
                         # => c + rem + w1 = r2 + w1 + w2
                         # => c + subs = r2 + w1 + w2
@@ -133,7 +146,7 @@ class AnagramTree:
         self.nodes[s] = ret
         
     def get(self, s):
-        sys.stderr.write('get called on "%s"\n' % s)
+        # sys.stderr.write('get called on "%s"\n' % s)
         s = normalize(s)
         self.add(s)
         return self.nodes[s]
@@ -157,7 +170,7 @@ class TestAnagramTree(unittest.TestCase):
         tree = AnagramTree()
         z = tree.get('fatcat')
         self.assertTrue('' in z)
-        self.assertTrue(('cat', 'fat') in z[''])
+        self.assertTrue(('cat,fat') in z[''])
 
 # Algorithm
 # for each substring:
