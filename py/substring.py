@@ -21,7 +21,6 @@ class Congruence:
         return k in self.data
 
     def __getitem__(self, k):
-        sys.stderr.write('Getting "%s" from Congruence %s\n' % (k, self.data))
         return self.data[k]
 
     def iteritems(self):
@@ -30,7 +29,6 @@ class Congruence:
     def merge(self, remainder, w1, w2):
         """Merge two sub-congruences into this one
         """
-        sys.stderr.write('Merging "%s" and "%s"\n' % (w1,w2))
         errmsg = 'parameters w1 and w2 must be sets of comma-separated strings'
         if type(w1) != set or type(w2) != set:
             raise ValueError(errmsg)
@@ -90,9 +88,9 @@ class TestCongruence(unittest.TestCase):
         self.assertTrue(('abc', 'def') in z.data['k'])
 
 class AnagramTree:
-    def __init__(self, wordlist=None):
+    def __init__(self, wordlist=None, minLength=3):
         if wordlist == None:
-            wordlist = Wordlist()
+            wordlist = Wordlist(minLength=minLength)
         self.wordlist = wordlist
         # nodes is a mapping of (normalized) strings to anagram congruences
         self.nodes = {}
@@ -108,11 +106,11 @@ class AnagramTree:
 
         s = normalize(s)
         ret = Congruence()
+        ret.merge(s, set(), set())
         if s in self.wordlist:
             ret.merge('', self.wordlist[s], set())
 
         for c, s1 in substrings(s).iteritems():
-            sys.stderr.write('recursing "%s" "%s"\n' % (c, s1))
             # s = c + s1
             x = self.get(s1)
             for r1, w1 in x.iteritems():
@@ -129,6 +127,7 @@ class AnagramTree:
                 if len(w1) == 0:
                     continue
                 s2 = normalize(c + r1)
+                ret.merge(s2, w1, set())
                 if s2 in self.wordlist:
                     # Eureka! No remainder
                     ret.merge('', self.wordlist[s2], w1)
@@ -146,14 +145,22 @@ class AnagramTree:
         self.nodes[s] = ret
         
     def get(self, s):
-        # sys.stderr.write('get called on "%s"\n' % s)
         s = normalize(s)
         self.add(s)
         return self.nodes[s]
 
+    def anagrams(self, s):
+        z = self.get(s)
+        if '' not in z:
+            return None
+        ret = []
+        for t in z['']:
+            ret.append(t.replace(',', ' '))
+        return ret
+
 class TestAnagramTree(unittest.TestCase):
     def test_add_wordOrdered(self):
-        tree = AnagramTree()
+        tree = AnagramTree(minLength=2)
         tree.add('be')
         z = tree.get('be')
         self.assertTrue('' in z)
@@ -172,12 +179,13 @@ class TestAnagramTree(unittest.TestCase):
         self.assertTrue('' in z)
         self.assertTrue(('cat,fat') in z[''])
 
-# Algorithm
-# for each substring:
-#    words, partial = findAnagrams(substring)
-#    w2, p2 = findAnagrams(partial + missingletter)
-#    return (words + w2, p2)
-#    return (words, partial + missingletter)
+    def test_anagrams(self):
+        tree = AnagramTree()
+        ans = tree.anagrams('fatcat')
+        self.assertTrue('cat fat' in ans)
+        self.assertTrue('act fat' in ans)
+        self.assertTrue('aft cat' in ans)
+
 
 if __name__ == '__main__':
     unittest.main()

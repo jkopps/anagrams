@@ -5,7 +5,7 @@ import unittest
 from utils import *
 
 class Wordlist:
-    def __init__(self, proper=False, minLength=2):
+    def __init__(self, proper=False, minLength=1):
         self.proper = proper
         self.linect = 0
         self.words = set()
