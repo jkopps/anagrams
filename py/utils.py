@@ -21,6 +21,13 @@ def substrings(s):
         ret[c] = s[:i] + s[i+1:]
     return ret
 
+def anacmp(a, b):
+    a_ = a.split(' ')
+    b_ = b.split(' ')
+    if len(a_) != len(b_):
+        return cmp(len(a_), len(b_))
+    return cmp(min(map(len, b_)), min(map(len, a_)))
+
 class TestUtilities(unittest.TestCase):
     def test_normalize_empth(self):
         x = ''
@@ -61,6 +68,12 @@ class TestUtilities(unittest.TestCase):
         self.assertEqual('abc,def,ghi,jkl', wordset('abc,ghi', 'def,jkl'))
         self.assertEqual('abc,def,ghi,jkl', wordset('abc,ghi,jkl', 'def'))
         self.assertEqual('abc,def,ghi,jkl', wordset('ghi', 'abc,def,jkl'))
+
+    def test_anacmp(self):
+        x = ['aa bb cc', 'aa bbc c', 'aab bcc', 'aa bbcc']
+        expected = ['aab bcc', 'aa bbcc', 'aa bb cc', 'aa bbc c']
+        x.sort(cmp=anacmp)
+        self.assertEqual(x, expected)
 
 if __name__ == '__main__':
     unittest.main()

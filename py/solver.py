@@ -156,6 +156,7 @@ class AnagramTree:
         ret = []
         for t in z['']:
             ret.append(t.replace(',', ' '))
+        ret.sort(cmp=anacmp)
         return ret
 
 class TestAnagramTree(unittest.TestCase):
